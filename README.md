@@ -3,4 +3,8 @@ An implementation of the Princeton version of Alpha Zero modified to work for th
 
 This engine requires Python >=3.6 with keras installed.
 
+This work was branched from on the Stanford General Alpha Zero implementation and designed with the help of this tutorial:
+https://web.stanford.edu/~surag/posts/alphazero.html
 
+The main branch is:
+https://github.com/suragnair/alpha-zero-general/blob/master/README.md
