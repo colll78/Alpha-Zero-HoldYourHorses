@@ -7,11 +7,11 @@ boardWidth = 7
 boardHeight = 6
 
 class Board():
-    def __init__(self, board_height=boardWidth, board_width=boardHeight, np_pieces=None, player=1):
+    def __init__(self, board_height=boardHeight, board_width=boardWidth, np_pieces=None, player=1, moves_rem=100):
         self.game_over = False
-        self.height = board_height or boardHeight
-        self.width = board_width or boardWidth
-        self.moves_remaining = 100
+        self.height = boardHeight
+        self.width = boardWidth
+        self.moves_remaining = moves_rem
         self.winner = None
         self.player = player
 
@@ -75,6 +75,9 @@ class Board():
         direction = [(1, -2), (2, -1), (2, 1), (1, 2), (-1, 2), (-2, 1), (-2, -1),
                      (-1, -2)]  # Possible (dx, dy) moves
         moves = []
+        print(self.np_pieces)
+        # print("BOARD Width!, ", self.width)
+        # print("BOARD Height!, ", self.height)
         for xStart in range(self.width):  # Search board for player's pieces
             for yStart in range(self.height):
                 if self.np_pieces[xStart, yStart] == color:  # Found a piece!
@@ -85,6 +88,11 @@ class Board():
                             moves.append((xStart, yStart, xEnd,
                                           yEnd))  # If square is empty or occupied by the opponent, then we have a legal move.
         return moves
+
+    def has_legal_moves(self, player):
+        for move in self.get_legal_moves(player):
+            return True
+        return False
 
     def make_move(self, move, color):
         (xStart, yStart, xEnd, yEnd) = move
@@ -103,6 +111,7 @@ class Board():
         elif self.moves_remaining == 0:  # Otherwise, if there are no more moves left, the game is drawn
             self.game_over = True
             self.winner = 0
+        self.np_pieces = np.flip(np.flip(self.np_pieces, 1), 0)
 
     def mirror(self):
         board = np.copy(self.np_pieces)

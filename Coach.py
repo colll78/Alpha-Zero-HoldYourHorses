@@ -7,7 +7,8 @@ import time, os, sys
 from pickle import Pickler, Unpickler
 from random import shuffle
 import boto3
-
+import sys
+sys.setrecursionlimit(30000)
 
 class Coach():
     """
@@ -56,7 +57,7 @@ class Coach():
             sym = self.game.getSymmetries(canonicalBoard, pi)
             self.game.display(canonicalBoard)
             for b, p in sym:
-                trainExamples.append([b, self.curPlayer, p, None])
+                trainExamples.append([b.np_pieces , self.curPlayer, p, None])
 
             action = np.random.choice(len(pi), p=pi)
 
@@ -121,6 +122,7 @@ class Coach():
         # shuffle examlpes before training
         trainExamples = []
         for e in self.trainExamplesHistory:
+            #print("Train examples:", e)
             trainExamples.extend(e)
         shuffle(trainExamples)
 
@@ -143,7 +145,7 @@ class Coach():
         print('PITTING AGAINST PREVIOUS VERSION')
         arena = Arena(lambda x: np.argmax(pmcts.getActionProb(x, temp=0)),
                       lambda x: np.argmax(nmcts.getActionProb(x, temp=0)), self.game)
-        pwins, nwins, draws = arena.playGames(self.args.arenaCompare)
+        pwins, nwins, draws = arena.playGames(self.args.arenaCompare, verbose=True)
 
         print('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
         if pwins + nwins > 0 and float(nwins) / (pwins + nwins) < self.args.updateThreshold:
@@ -158,7 +160,7 @@ class Coach():
     # def aws_s3_sync(self):
     #     os.system('aws sync temp s3://minichess/data')
 
-    def learn(self):
+    def   learn(self):
         """
         Performs numIters iterations with numEps episodes of self-play in each
         iteration. After every iteration, it retrains neural network with
@@ -205,11 +207,12 @@ class Coach():
             trainExamples = []
             for e in self.trainExamplesHistory:
                 trainExamples.extend(e)
+                print("Examples", e)
             shuffle(trainExamples)
 
             # training new network, keeping a copy of the old one
-            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
-            self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+            self.nnet.save_checkpoint(folder=self.args.checkpoint, filename='temp.pth.ckpt')
+            self.pnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.ckpt')
             pmcts = MCTS(self.game, self.pnet, self.args)
 
             self.nnet.train(trainExamples)
@@ -223,7 +226,7 @@ class Coach():
             print('NEW/PREV WINS : %d / %d ; DRAWS : %d' % (nwins, pwins, draws))
             if pwins + nwins > 0 and float(nwins) / (pwins + nwins) < self.args.updateThreshold:
                 print('REJECTING NEW MODEL')
-                self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.tar')
+                self.nnet.load_checkpoint(folder=self.args.checkpoint, filename='temp.pth.ckpt')
             else:
                 print('ACCEPTING NEW MODEL')
                 self.nnet.save_checkpoint(folder=self.args.checkpoint, filename=self.getCheckpointFile(i))

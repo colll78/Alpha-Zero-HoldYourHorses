@@ -1,6 +1,8 @@
 import numpy as np
 from pytorch_classification.utils import Bar, AverageMeter
 import time
+import sys
+sys.setrecursionlimit(30000)
 
 class Arena():
     """
@@ -44,13 +46,24 @@ class Arena():
             if verbose:
                 assert(self.display)
                 self.display(self.game,board,curPlayer)
+                print("Current Player is ", curPlayer)
+            # print("Playing arena game, move: ", it)
             action = players[curPlayer+1](self.game.getCanonicalForm(board, curPlayer))
 
             valids = self.game.getValidMoves(self.game.getCanonicalForm(board, curPlayer),1)
-
+           # print("Current Player is ", curPlayer)
             if valids[action]==0:
-                assert valids[action] >0
+                print(board.np_pieces )
+                print("Current Player is ", curPlayer )
+                print("MOVE not valid")
+                print(self.game._possible_moves[action])
+                #assert valids[action] >0
+            # print("Before Move:")
+            # print(board.np_pieces)
             board, curPlayer = self.game.getNextState(board, curPlayer, action)
+            # print("After Move:")
+            # print(board.np_pieces)
+            #board, curPlayer = self.game.getNextState(self.game.getCanonicalForm(board, curPlayer),curPlayer, action)
             if moves > max_moves:
                 break
             moves += 1

@@ -19,32 +19,53 @@ class HoldHorsesGame(Game):
         return Board(boardHeight, boardWidth)
 
     def getBoardSize(self):
-        return (self._base_board.height, self._base_board.width)
+        return (self._base_board.width, self._base_board.height)
 
     def getGameEnded(self, board, player):
         r = board.get_result()
-        if r:
-            print("Result: %s" % r)
-            #print(board)
+        # if r:
+        #     print()
+        #     print("Result: %s" % r)
+        #     print(board.np_pieces)
+        #     print("result board ^")
+        #     print()
         return r or 0
 
     def getNextState(self, board, player, action):
-        b = Board(self._base_board.height, self._base_board.width, np.copy(board.np_pieces))
+        b = Board(self._base_board.height, self._base_board.width, np.copy(board.np_pieces),moves_rem=board.moves_remaining)
         move = self._possible_moves[action]
-        # valids = self.getValidMoves(self.getCanonicalForm(b, player), player)
-        # print(valids)
+        valids = self.getValidMoves(self.getCanonicalForm(b, player), 1)
+        assert valids[action] > 0
+        # print()
+        # print("The board is: ")
+        # print(b.np_pieces)
+        # print("The move is:", move)
+        # print("Player turn is: ", player)
+        # print("from piece is: ", b.np_pieces[move[0], move[1]])
+        # print("to piece is: ", b.np_pieces[move[2], move[3]])
+        # print()
         # if valids[action] == 0:
-        #     assert valids[action] > 0
+        #     print("The invalid move is:", move)
+        #     print("Player turn is: ", player)
+        #     print("from piece is: ", b.np_pieces[move[0], move[1]])
+        #     print("to piece is: ", b.np_pieces[move[2], move[3]])
+        #     print(board.np_pieces)
+
+            #
 
         b.make_move(move, player)
-        winner = b.winner
-        b = b.mirror()
-        b.moves_remaining = board.moves_remaining
-        b.winner = winner
+        # print("The new board is: ")
+        # print(b.np_pieces)
+        # input()
+        b.moves_remaining = board.moves_remaining - 1
         return (b, -player)
 
     def getValidMoves(self, board, player):
-        b = Board(self._base_board.height, self._base_board.width, np.copy(board.np_pieces))
+        b = Board(self._base_board.height, self._base_board.width, np.copy(board.np_pieces), moves_rem=board.moves_remaining)
+        if not b.has_legal_moves(player):
+            valids = [0.0] * self.getActionSize()
+            valids[-1] = 1
+            return np.array(valids)
         legal_moves = [str(x) for x in b.get_legal_moves(player)]
         valid_moves = np.isin(np.array(self._possible_moves_str), legal_moves).astype(int)
         assert np.sum(valid_moves) == len(legal_moves)
@@ -54,24 +75,27 @@ class HoldHorsesGame(Game):
         return 196
 
     def getCanonicalForm(self, board, player):
-        #assert player == board.player
+        b = Board(self._base_board.height, self._base_board.width, np.copy(board.np_pieces), moves_rem=board.moves_remaining)
         if player == 1:
-            return board
+            return b
         else:
-            b = board.mirror()
-            b.winner = board.winner
-            b.moves_remaining = board.moves_remaining
+            b.np_pieces = board.np_pieces * player
             return b
 
     def getSymmetries(self, board, pi):
         return [(board, pi)]
 
     def stringRepresentation(self, board):
-        return hashlib.md5(np.array_str(np.array(board)).encode("utf-8")).hexdigest()
+        # return hashlib.md5(np.array_str(board.np_pieces).encode("utf-8")).hexdigest()
+        # board_str = board.np_pieces.tostring()
+        # hash = hashlib.md5(board_str).hexdigest()
+        return hashlib.md5(board.np_pieces.tostring()).hexdigest()
 
 
     @staticmethod
     def display(board):
-        print("display")
-        #print()
-         print(board.np_pieces)
+        #print("display")
+        print()
+        print("Display")
+        print(board.np_pieces)
+

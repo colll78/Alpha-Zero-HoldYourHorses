@@ -1,7 +1,7 @@
 import logging
 import math
 import sys
-sys.setrecursionlimit(7000)
+sys.setrecursionlimit(30000)
 import numpy as np
 
 EPS = 1e-8
@@ -40,6 +40,7 @@ class MCTS():
 
         s = self.game.stringRepresentation(canonicalBoard)
         counts = [self.Nsa[(s, a)] if (s, a) in self.Nsa else 0 for a in range(self.game.getActionSize())]
+
         if temp == 0:
             bestAs = np.array(np.argwhere(counts == np.max(counts))).flatten()
             bestA = np.random.choice(bestAs)
@@ -50,6 +51,18 @@ class MCTS():
         counts = [x ** (1. / temp) for x in counts]
         counts_sum = float(sum(counts))
         probs = [x / counts_sum for x in counts]
+
+        # try:
+        #     counts = [x ** (1. / temp) for x in counts]
+        #     counts_sum = float(sum(counts))
+        #     probs = [x / counts_sum for x in counts]
+        # except Exception as e:
+        #     print("Exception on board")
+        #     import traceback
+        #     traceback.print_exc()
+        #     print(canonicalBoard.np_pieces)
+        #     quit()
+
         return probs
 
     def search(self, canonicalBoard):
@@ -71,8 +84,18 @@ class MCTS():
         Returns:
             v: the negative of the value of the current canonicalBoard
         """
+        #s = self.game.stringRepresentation(canonicalBoard)
+        try:
+            s = self.game.stringRepresentation(canonicalBoard)
+        except:
+            print("Exception")
+            print(canonicalBoard)
+            print("TYPE OF Thing: ", type(canonicalBoard.np_pieces))
+            print(canonicalBoard.np_pieces)
+            import traceback
+            traceback.print_exc()
+            quit()
 
-        s = self.game.stringRepresentation(canonicalBoard)
 
         if s not in self.Es:
             self.Es[s] = self.game.getGameEnded(canonicalBoard, 1)
@@ -97,7 +120,6 @@ class MCTS():
                 log.error("All valid moves were masked, doing a workaround.")
                 self.Ps[s] = self.Ps[s] + valids
                 self.Ps[s] /= np.sum(self.Ps[s])
-
             self.Vs[s] = valids
             self.Ns[s] = 0
             return -v
@@ -120,10 +142,29 @@ class MCTS():
                     best_act = a
 
         a = best_act
+
         next_s, next_player = self.game.getNextState(canonicalBoard, 1, a)
+
+        # try:
+        #     next_s, next_player = self.game.getNextState(canonicalBoard, 1, a)
+        # except Exception:
+        #     print("Exception at: getNextGameState MCTS")
+        #     print("Best action ", a)
+        #     print("Move is: ", self.game._possible_moves[a])
+        #     print("Valids of move is: ", valids[a])
+        #     print(canonicalBoard.np_pieces)
+
         next_s = self.game.getCanonicalForm(next_s, next_player)
 
-        v = self.search(next_s)
+        try:
+            v = self.search(next_s)
+        except:
+            print("Exception")
+            print(next_s)
+            print(next_s.np_pieces)
+            import traceback
+            traceback.print_exc()
+
 
         if (s, a) in self.Qsa:
             self.Qsa[(s, a)] = (self.Nsa[(s, a)] * self.Qsa[(s, a)] + v) / (self.Nsa[(s, a)] + 1)
